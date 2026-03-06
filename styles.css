@@ -1,0 +1,109 @@
+/* EW Signal App - Single page, minimal UX */
+
+:root {
+  --threat-bg: rgb(180, 83, 9);
+  --text: #111;
+  --text-muted: #444;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--threat-bg);
+  color: var(--text);
+  transition: background 0.4s ease;
+}
+
+.app {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* Threat level 1–10 */
+.threat-level-badge {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgba(0,0,0,0.6);
+}
+
+/* Primary threat: big and bold */
+.primary-label {
+  font-size: clamp(1.5rem, 6vw, 2.25rem);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-align: center;
+  margin: 0;
+  color: #111;
+}
+
+/* Direction: bearing + cardinal + relative */
+.direction-text {
+  font-size: clamp(0.9rem, 4vw, 1.1rem);
+  font-weight: 600;
+  color: var(--text-muted);
+  text-align: center;
+  margin: 0 0 0.25rem 0;
+}
+
+/* Compass container */
+.compass-wrap {
+  width: 100%;
+  aspect-ratio: 1;
+  max-width: min(320px, 90vw);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#compass-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+}
+
+/* Other possible threats */
+.secondary-section {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.secondary-section h3 {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin: 0 0 0.35rem 0;
+}
+
+.secondary-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.secondary-list li {
+  padding: 0.2rem 0;
+  opacity: 0.9;
+}
+
+.secondary-list strong {
+  margin-right: 0.35rem;
+}

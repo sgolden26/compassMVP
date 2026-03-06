@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#b45309" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23b45309'/><text x='16' y='22' font-size='14' text-anchor='middle' fill='white' font-family='sans-serif'>EW</text></svg>" />
+  <title>EW Signal</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <span class="threat-level-badge" id="threat-level" aria-label="Threat level">Threat Level: 5</span>
+    <h1 class="primary-label" id="primary-label" aria-label="Primary threat">DRONE</h1>
+    <p class="direction-text" id="direction-text" aria-label="Threat direction">045° NE, ahead</p>
+    <div class="compass-wrap">
+      <canvas id="compass-canvas" width="320" height="320" aria-label="Compass with threat bearings"></canvas>
+    </div>
+    <section class="secondary-section" aria-label="Other possible threats">
+      <h3>Other possible threats</h3>
+      <ul class="secondary-list" id="secondary-list"></ul>
+    </section>
+  </div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
