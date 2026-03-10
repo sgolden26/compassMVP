@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
-"""Start a local server on the first available port."""
+"""Start a local server on the first available port. Usage: python3 serve.py [directory]"""
+import os
 import socket
+import sys
 from http.server import HTTPServer, SimpleHTTPRequestHandler
+
+if len(sys.argv) > 1:
+    os.chdir(sys.argv[1])
 
 def find_free_port(start=8000, end=9000):
     for port in range(start, end):

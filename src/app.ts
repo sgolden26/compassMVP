@@ -3,11 +3,11 @@
  */
 
 import { HIGH_CONFIDENCE_THRESHOLD, THREAT_LEVEL_MIN, THREAT_LEVEL_MAX } from './config.js';
-import { DummyDataProvider } from './data-provider.js';
+import { DummyDataProvider, type Threat, type DataPayload, type DeviceState } from './data-provider.js';
 
 const dataProvider = new DummyDataProvider();
 
-const CARDINALS = [
+const CARDINALS: { name: string; min: number; max: number }[] = [
   { name: 'N', min: 348.75, max: 360 }, { name: 'N', min: 0, max: 11.25 },
   { name: 'NE', min: 11.25, max: 56.25 }, { name: 'E', min: 56.25, max: 101.25 },
   { name: 'SE', min: 101.25, max: 146.25 }, { name: 'S', min: 146.25, max: 191.25 },
@@ -15,30 +15,30 @@ const CARDINALS = [
   { name: 'NW', min: 281.25, max: 348.75 },
 ];
 
-const RELATIVE = [
+const RELATIVE: { name: string; min: number; max: number }[] = [
   { name: 'ahead', min: 337.5, max: 22.5 }, { name: 'ahead right', min: 22.5, max: 67.5 },
   { name: 'right', min: 67.5, max: 112.5 }, { name: 'behind right', min: 112.5, max: 157.5 },
   { name: 'behind', min: 157.5, max: 202.5 }, { name: 'behind left', min: 202.5, max: 247.5 },
   { name: 'left', min: 247.5, max: 292.5 }, { name: 'ahead left', min: 292.5, max: 337.5 },
 ];
 
-function bearingToCardinal(deg) {
+function bearingToCardinal(deg: number): string {
   const d = ((deg % 360) + 360) % 360;
   const c = CARDINALS.find((r) => d >= r.min && d < r.max);
   return c ? c.name : 'N';
 }
 
-function bearingToRelative(deg) {
+function bearingToRelative(deg: number): string {
   const d = ((deg % 360) + 360) % 360;
   const r = RELATIVE.find((x) => d >= x.min && d < x.max);
   return r ? r.name : 'ahead';
 }
 
-function relativeBearing(deviceHeading, threatBearing) {
+function relativeBearing(deviceHeading: number, threatBearing: number): number {
   return ((threatBearing - deviceHeading) % 360 + 360) % 360;
 }
 
-function formatDirection(deviceHeading, threatBearing) {
+function formatDirection(deviceHeading: number, threatBearing: number): string {
   const rel = relativeBearing(deviceHeading, threatBearing);
   const deg = Math.round(rel);
   const card = bearingToCardinal(rel);
@@ -46,13 +46,13 @@ function formatDirection(deviceHeading, threatBearing) {
   return `${String(deg).padStart(3, '0')}° ${card}, ${relText}`;
 }
 
-function confidenceToThreatLevel(confidence) {
+function confidenceToThreatLevel(confidence: number | null | undefined): number {
   if (confidence == null) return 5;
   const level = Math.round(1 + (1 - confidence) * 9);
   return Math.max(THREAT_LEVEL_MIN, Math.min(THREAT_LEVEL_MAX, level));
 }
 
-function threatLevelToGradient(level) {
+function threatLevelToGradient(level: number): string {
   const t = (level - THREAT_LEVEL_MIN) / (THREAT_LEVEL_MAX - THREAT_LEVEL_MIN);
   const r = t <= 0.5 ? 1 : 1 - (t - 0.5) * 2;
   const g = t <= 0.5 ? t * 2 : 1;
@@ -60,24 +60,33 @@ function threatLevelToGradient(level) {
   return `rgb(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)})`;
 }
 
-const el = (id) => document.getElementById(id);
+const el = (id: string): HTMLElement | null => document.getElementById(id);
+
 const elements = {
   root: document.documentElement,
   threatLevel: el('threat-level'),
   primaryLabel: el('primary-label'),
   directionText: el('direction-text'),
-  compassCanvas: el('compass-canvas'),
+  compassCanvas: el('compass-canvas') as HTMLCanvasElement | null,
   secondaryList: el('secondary-list'),
 };
 
-const SECONDARY_COLORS = ['#6b7280', '#9ca3af']; // gray tones so primary DRONE pops
+const SECONDARY_COLORS = ['#f9fafb', '#ffffff']; // RADAR, COMMS (3 more shades brighter)
 
-function drawCompass(deviceHeading, threats, showSecondary) {
+function drawCompass(
+  deviceHeading: number,
+  threats: Threat[],
+  showSecondary: boolean
+): void {
   const canvas = elements.compassCanvas;
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
+  if (!ctx) return;
   const dpr = window.devicePixelRatio || 1;
-  const size = Math.min(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight, 320);
+  const parent = canvas.parentElement;
+  const size = parent
+    ? Math.min(parent.clientWidth, parent.clientHeight, 320)
+    : 320;
   canvas.width = size * dpr;
   canvas.height = size * dpr;
   canvas.style.width = size + 'px';
@@ -153,7 +162,7 @@ function drawCompass(deviceHeading, threats, showSecondary) {
     threats.slice(1, 3).forEach((t, i) => {
       const rel = relativeBearing(deviceHeading, t.bearing);
       const rad = (rel * Math.PI) / 180;
-      ctx.strokeStyle = SECONDARY_COLORS[i] || '#888';
+      ctx.strokeStyle = SECONDARY_COLORS[i] ?? '#888';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(cx, cy);
@@ -163,14 +172,15 @@ function drawCompass(deviceHeading, threats, showSecondary) {
   }
 }
 
-let lastData = { threats: [], device: { heading: 0 } };
+let lastData: DataPayload = { threats: [], device: { heading: 0 } };
 
-function render(data) {
-  const { threats = [], device = {} } = data;
+function render(data: DataPayload): void {
+  const threats = data.threats ?? [];
+  const device: DeviceState = data.device ?? { heading: 0 };
   const heading = device.heading ?? 0;
-  const sorted = [...threats].sort((a, b) => (b.confidence || 0) - (a.confidence || 0));
+  const sorted = [...threats].sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0));
   const primary = sorted[0];
-  const showOthers = !primary || primary.confidence < HIGH_CONFIDENCE_THRESHOLD;
+  const showOthers = !primary || (primary.confidence ?? 0) < HIGH_CONFIDENCE_THRESHOLD;
   const secondary = showOthers ? sorted.slice(1, 3) : [];
 
   const level = primary ? confidenceToThreatLevel(primary.confidence) : 5;
@@ -191,18 +201,18 @@ function render(data) {
     elements.secondaryList.innerHTML = secondary
       .map((t, i) => {
         const dir = formatDirection(heading, t.bearing);
-        const hex = SECONDARY_COLORS[i] || '#666';
-        return `<li style="color:${hex}"><strong>${t.label}</strong> ${Math.round((t.confidence || 0) * 100)}% — ${dir}</li>`;
+        const hex = SECONDARY_COLORS[i] ?? '#666';
+        return `<li style="color:${hex}"><strong>${t.label}</strong> ${Math.round((t.confidence ?? 0) * 100)}% — ${dir}</li>`;
       })
       .join('');
   }
   const secondarySection = document.querySelector('.secondary-section');
-  if (secondarySection) secondarySection.hidden = secondary.length === 0;
+  if (secondarySection) (secondarySection as HTMLElement).hidden = secondary.length === 0;
 
   drawCompass(heading, primary ? [primary, ...secondary] : [], showOthers);
 }
 
-function init() {
+function init(): void {
   const unsub = dataProvider.subscribe((data) => {
     lastData = data;
     render(data);

@@ -1,0 +1,12 @@
+{
+  "name": "ew-signal-app",
+  "version": "1.0.0",
+  "description": "EW Signal MVP for on-ground soldiers",
+  "scripts": {
+    "build": "tsc && node -e \"const fs=require('fs'); ['index.html','styles.css','sw.js'].forEach(f=>fs.copyFileSync(f,'dist/'+f));\"",
+    "start": "npm run build && python3 serve.py dist"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  }
+}
